@@ -270,11 +270,15 @@ module.exports = {
     async confirmClose(interaction, channelId) {
         await interaction.deferUpdate();
 
+        // Récupérer le canal (fetch si pas en cache)
+        const channel = interaction.channel || await interaction.client.channels.fetch(channelId).catch(() => null);
+        if (!channel) return;
+
         const ticketConfig = await db.get(`tickets_${interaction.guild.id}`);
-        const ticketData = await db.get(`ticket_${interaction.channel.id}`);
+        const ticketData = await db.get(`ticket_${channel.id}`);
 
         // Créer la transcription
-        const messages = await interaction.channel.messages.fetch({ limit: 100 });
+        const messages = await channel.messages.fetch({ limit: 100 });
         const transcript = messages.reverse().map(m => 
             `[${new Date(m.createdTimestamp).toLocaleString()}] ${m.author.tag}: ${m.content || '[Embed/Attachment]'}`
         ).join('\n');
@@ -289,7 +293,7 @@ module.exports = {
                     .addFields(
                         { name: 'Ticket', value: `#${ticketData?.number || 'N/A'}`, inline: true },
                         { name: 'Fermé par', value: interaction.user.toString(), inline: true },
-                        { name: 'Propriétaire', value: `<@${ticketData?.owner}>`, inline: true }
+                        { name: 'Propriétaire', value: `<@${ticketData?.owner || 'inconnu'}>`, inline: true }
                     )
                     .setTimestamp();
 
@@ -304,10 +308,10 @@ module.exports = {
         }
 
         // Supprimer le ticket de la base de données
-        await db.delete(`ticket_${interaction.channel.id}`);
+        await db.delete(`ticket_${channel.id}`);
 
         // Supprimer le canal
-        await interaction.channel.delete().catch(() => {});
+        await channel.delete().catch(() => {});
     },
 
     async claimTicket(interaction) {
