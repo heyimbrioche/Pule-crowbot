@@ -108,14 +108,16 @@ module.exports = {
             });
         }
 
-        // Vérifier les tickets existants de l'utilisateur
-        const existingTickets = interaction.guild.channels.cache.filter(
-            c => c.name.includes(interaction.user.id.slice(-4)) && c.parentId === ticketConfig.categoryId
+        // Vérifier si l'utilisateur a déjà un ticket ouvert dans la guild
+        const allData = await db.all();
+        const existingUserTicket = allData.find(d =>
+            d.id.startsWith('ticket_') &&
+            d.value.owner === interaction.user.id
         );
 
-        if (existingTickets.size >= (ticketConfig.maxTickets || 3)) {
+        if (existingUserTicket) {
             return interaction.editReply({
-                content: `❌ Vous avez déjà ${existingTickets.size} ticket(s) ouvert(s). Fermez-en un avant d'en créer un nouveau.`
+                content: '❌ Vous avez déjà un ticket ouvert. Vous ne pouvez créer qu\'un seul ticket à la fois.'
             });
         }
 
@@ -304,6 +306,33 @@ module.exports = {
                         name: `ticket-${ticketData?.number || 'unknown'}-transcript.txt`
                     }]
                 });
+            }
+        }
+
+        // Envoyer la transcription au propriétaire du ticket
+        if (ticketData?.owner) {
+            try {
+                const owner = await interaction.guild.members.fetch(ticketData.owner);
+                if (owner) {
+                    const transcriptEmbed = new EmbedBuilder()
+                        .setColor('#ED4245')
+                        .setTitle('🔒 Ticket Fermé')
+                        .setDescription(`Votre ticket #${ticketData.number || 'N/A'} a été fermé.\nVoici la transcription complète de votre ticket.`)
+                        .addFields(
+                            { name: '📝 Sujet', value: ticketData.subject || 'Non spécifié', inline: false }
+                        )
+                        .setTimestamp();
+
+                    await owner.send({
+                        embeds: [transcriptEmbed],
+                        files: [{
+                            attachment: Buffer.from(transcript, 'utf-8'),
+                            name: `ticket-${ticketData.number || 'unknown'}-transcript.txt`
+                        }]
+                    });
+                }
+            } catch (error) {
+                console.log(`Impossible d'envoyer le transcript à ${ticketData.owner} : DMs fermés ou membre introuvable`);
             }
         }
 
