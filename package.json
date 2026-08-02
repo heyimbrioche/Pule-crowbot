@@ -2,9 +2,9 @@
   "name": "pulse-crowbot",
   "version": "1.0.0",
   "description": "Bot Discord complet pour la gestion de serveur - Tickets, Bienvenue, Modération",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node index.js",
     "dev": "nodemon src/index.js"
   },
   "keywords": [
