@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "pterodactyl": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [
     "discord",
@@ -20,7 +24,8 @@
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
     "ms": "^2.1.3",
-    "quick.db": "^9.1.7"
+    "quick.db": "^9.1.7",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
